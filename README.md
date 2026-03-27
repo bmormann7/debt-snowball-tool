@@ -142,3 +142,21 @@ You are free to use, modify, and distribute it as long as the original license i
 
 This project was inspired by the Debt Snowball method popularized by personal finance educators.  
 Special thanks to the open‑source community for tools, libraries, and patterns that helped shape this project’s architecture.
+
+
+### Updates
+
+Intelligent File Selection & Last‑Used Memory
+The CLI now includes a smart file‑loading system that makes it easy to switch between multiple debt profiles:
+
+Automatically scans the data/ directory for all .json debt files
+
+Displays them in a numbered, alphabetical menu
+
+Remembers the last used file and sets it as the default
+
+Allows the user to press Enter to quickly reload the default file
+
+Stores the default in data/.last_used_file for seamless future sessions
+
+This upgrade improves usability for both personal and public use cases — for example, keeping a private debts_personal.json locally while maintaining a public debts_example.json in the repository.

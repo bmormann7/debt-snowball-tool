@@ -1,3 +1,5 @@
+import os
+import json
 from storage.file_io import load_debts, save_debts
 from models.debt import Debt
 from engine.snowball import simulate_snowball
@@ -9,44 +11,6 @@ from ui.summary import print_summary
 from storage.export_csv import export_amortization_csv
 
 console = Console()
-
-# -----------------------------
-# CHART MENU (kept for later use)
-# -----------------------------
-def chart_menu(amortization):
-    console.print("\n[bold cyan]Charts Available:[/]")
-    console.print("1. Balance Over Time")
-    console.print("2. Payment Breakdown")
-    console.print("3. Payoff Timeline")
-    console.print("4. Progress Bars")
-    console.print("5. Interest vs Principal")
-    console.print("6. Back")
-
-    choice = input("Choose a chart: ")
-
-    if choice == "1":
-        from charts.balance_over_time import show_chart
-        show_chart(amortization)
-
-    elif choice == "2":
-        from charts.payment_breakdown import show_chart
-        show_chart(amortization)
-
-    elif choice == "3":
-        from charts.payoff_timeline import show_chart
-        show_chart(amortization)
-
-    elif choice == "4":
-        from charts.progress_bars import show_chart
-        show_chart(amortization)
-
-    elif choice == "5":
-        from charts.interest_vs_principal import show_chart
-        show_chart(amortization)
-
-    else:
-        return
-
 
 # -----------------------------
 # VIEW DEBTS
@@ -203,31 +167,77 @@ def simulation_callback(debts, snowball_pct, extra_amount, extra_duration):
 
     console.print(f"\n[bold green]Debt-free in {months} months![/]\n")
 
-    # 1. Amortization table FIRST
     print_amortization(amortization)
-
-    # 2. Summary panel SECOND
     print_summary(amortization, months)
 
-    # 3. Payments Remaining THIRD
     console.print("\n[bold cyan]Payments Remaining:[/]")
     for name, payoff_month in timeline:
         console.print(f"{name}: {payoff_month} months remaining")
 
-    # 4. Total payment FOURTH
     total_payment = sum(d.min_payment for d in debts)
     console.print(f"\n[bold yellow]Total payment: ${total_payment:,.2f}[/]\n")
 
-    # 5. Chart menu (DISABLED)
-    # chart_choice = input("View charts? (y/n): ").lower()
-    # if chart_choice == "y":
-    #     chart_menu(amortization)
-
-    # 6. CSV export LAST
     choice = input("Export amortization to CSV? (y/n): ").lower()
     if choice == "y":
         filename = export_amortization_csv(amortization)
         console.print(f"[bold green]Exported to {filename}[/]")
+
+
+# -----------------------------
+# FILE SELECTION (NEW)
+# -----------------------------
+def select_debt_file():
+    data_dir = "data"
+    last_used_path = os.path.join(data_dir, ".last_used_file")
+
+    # Load last used file if it exists
+    last_used = None
+    if os.path.exists(last_used_path):
+        with open(last_used_path, "r") as f:
+            last_used = f.read().strip()
+
+    # Get all JSON files
+    files = [f for f in os.listdir(data_dir) if f.endswith(".json")]
+    files.sort()
+
+    if not files:
+        console.print("[bold red]No JSON files found in data/[/]")
+        return None
+
+    console.print("\n[bold cyan]Available debt files:[/]")
+    for idx, filename in enumerate(files, start=1):
+        default_marker = " (default)" if filename == last_used else ""
+        console.print(f"{idx}. {filename}{default_marker}")
+
+    prompt = "\nSelect a file by number"
+    if last_used:
+        prompt += f" [Press Enter for {last_used}]"
+    prompt += ": "
+
+    selection = input(prompt).strip()
+
+    if selection == "":
+        if last_used:
+            chosen = last_used
+        else:
+            console.print("[bold red]No default file available.[/]")
+            return None
+    else:
+        try:
+            selection = int(selection)
+            if selection < 1 or selection > len(files):
+                console.print("[bold red]Invalid selection.[/]")
+                return None
+            chosen = files[selection - 1]
+        except ValueError:
+            console.print("[bold red]Please enter a valid number.[/]")
+            return None
+
+    # Save as last used
+    with open(last_used_path, "w") as f:
+        f.write(chosen)
+
+    return os.path.join(data_dir, chosen)
 
 
 # -----------------------------
@@ -252,8 +262,10 @@ def menu():
         choice = input("\nChoose an option: ")
 
         if choice == "1":
-            debts = load_debts()
-            console.print("\n[bold green]Debts loaded successfully.[/]\n")
+            path = select_debt_file()
+            if path:
+                debts = load_debts(path)
+                console.print(f"\n[bold green]Loaded debts from {path}[/]\n")
 
         elif choice == "2":
             add_debt_interactively(debts)
