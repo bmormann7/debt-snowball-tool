@@ -1,0 +1,9 @@
+# Ignore personal debt file
+data/debts_personal.json
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore Streamlit cache
+.streamlit/
