@@ -1,0 +1,32 @@
+[
+    {
+        "name": "Furniture Store",
+        "balance": 900,
+        "interest_rate": 0.0,
+        "min_payment": 40
+    },
+    {
+        "name": "Mastercard",
+        "balance": 2300,
+        "interest_rate": 0.1599,
+        "min_payment": 65
+    },
+    {
+        "name": "Visa Card",
+        "balance": 4500,
+        "interest_rate": 0.1999,
+        "min_payment": 110
+    },
+    {
+        "name": "Car Loan",
+        "balance": 12000,
+        "interest_rate": 0.055,
+        "min_payment": 350
+    },
+    {
+        "name": "Student Loan",
+        "balance": 15000.0,
+        "interest_rate": 0.045,
+        "min_payment": 200
+    }
+]
