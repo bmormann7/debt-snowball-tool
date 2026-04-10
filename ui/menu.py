@@ -155,14 +155,15 @@ def sort_debts(debts):
 
 
 # -----------------------------
-# SIMULATION CALLBACK
+# SIMULATION CALLBACK (UPDATED)
 # -----------------------------
-def simulation_callback(debts, snowball_pct, extra_amount, extra_duration):
+def simulation_callback(debts, snowball_pct, extra_amount, extra_duration, mode):
     months, timeline, amortization = simulate_snowball(
         debts,
         snowball_pct=snowball_pct,
         extra_amount=extra_amount,
-        extra_duration=extra_duration
+        extra_duration=extra_duration,
+        mode=mode
     )
 
     console.print(f"\n[bold green]Debt-free in {months} months![/]\n")
@@ -184,19 +185,17 @@ def simulation_callback(debts, snowball_pct, extra_amount, extra_duration):
 
 
 # -----------------------------
-# FILE SELECTION (NEW)
+# FILE SELECTION
 # -----------------------------
 def select_debt_file():
     data_dir = "data"
     last_used_path = os.path.join(data_dir, ".last_used_file")
 
-    # Load last used file if it exists
     last_used = None
     if os.path.exists(last_used_path):
         with open(last_used_path, "r") as f:
             last_used = f.read().strip()
 
-    # Get all JSON files
     files = [f for f in os.listdir(data_dir) if f.endswith(".json")]
     files.sort()
 
@@ -233,7 +232,6 @@ def select_debt_file():
             console.print("[bold red]Please enter a valid number.[/]")
             return None
 
-    # Save as last used
     with open(last_used_path, "w") as f:
         f.write(chosen)
 
@@ -241,7 +239,7 @@ def select_debt_file():
 
 
 # -----------------------------
-# MAIN MENU LOOP
+# MAIN MENU LOOP (UPDATED)
 # -----------------------------
 def menu():
     debts = []
@@ -278,6 +276,7 @@ def menu():
             console.print("\n[bold green]Debts saved successfully.[/]\n")
 
         elif choice == "5":
+            # No payoff method selection here anymore — wizard handles it
             run_simulation_wizard(debts, simulation_callback)
 
         elif choice == "6":

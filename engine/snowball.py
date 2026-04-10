@@ -5,13 +5,15 @@ def simulate_snowball(
     debts,
     snowball_pct=1.0,
     extra_amount=None,
-    extra_duration=None
+    extra_duration=None,
+    mode="snowball"   # <-- NEW
 ):
     """
     debts: list of Debt objects (originals are not modified)
     snowball_pct: decimal (1.0 = 100%, 0.5 = 50%, etc.)
     extra_amount: float or None
     extra_duration: int (months) or "life_of_smallest" or None
+    mode: "snowball" or "avalanche"
 
     Returns:
         months_to_debt_free,
@@ -22,8 +24,16 @@ def simulate_snowball(
     # Work on a deep copy so original debts remain untouched
     debts = deepcopy(debts)
 
-    # Sort smallest to largest by balance
-    debts.sort(key=lambda d: d.balance)
+    # ---------------------------------------------------------
+    # INITIAL SORTING BASED ON STRATEGY
+    # ---------------------------------------------------------
+    if mode == "snowball":
+        debts.sort(key=lambda d: d.balance)
+    elif mode == "avalanche":
+        debts.sort(key=lambda d: d.interest_rate, reverse=True)
+    else:
+        raise ValueError("Invalid mode. Choose 'snowball' or 'avalanche'.")
+
     original_balances = {d.name: d.balance for d in debts}
 
     amortization = []
@@ -47,17 +57,24 @@ def simulate_snowball(
     # Continue until all debts are paid
     while any(d.balance > 0 for d in debts):
 
-        # Identify smallest active debt
+        # Identify active debts
         active_debts = [d for d in debts if d.balance > 0]
-        active_debts.sort(key=lambda d: d.balance)
-        smallest = active_debts[0]
+
+        # ---------------------------------------------------------
+        # SORT ACTIVE DEBTS EACH MONTH BASED ON STRATEGY
+        # ---------------------------------------------------------
+        if mode == "snowball":
+            active_debts.sort(key=lambda d: d.balance)
+        elif mode == "avalanche":
+            active_debts.sort(key=lambda d: d.interest_rate, reverse=True)
+
+        smallest = active_debts[0]  # "smallest" = target debt for snowball/avalanche
 
         # Determine extra payment for this month
         extra_this_month = 0.0
 
         if extra_amount is not None:
             if extra_duration == "life_of_smallest":
-                # Apply extra only while smallest debt exists
                 extra_this_month = extra_amount
             elif isinstance(extra_duration, int):
                 if extra_months_used < extra_duration:
@@ -71,7 +88,7 @@ def simulate_snowball(
             # Monthly interest
             interest = d.balance * (d.interest_rate / 12)
 
-            # Base payment = minimum + snowball (only for smallest debt)
+            # Base payment = minimum + snowball (only for target debt)
             if d is smallest:
                 payment = d.min_payment + snowball
                 payment += extra_this_month
